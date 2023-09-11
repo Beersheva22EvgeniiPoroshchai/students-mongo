@@ -1,6 +1,7 @@
 package telran.spring.students.service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 
@@ -150,45 +151,88 @@ public  class StudentsServiceImpl implements StudentsService {
 		
 		return students.stream().map(this::toIdNameMarks).toList();
 	}
+	
+	
 	IdNameMarks toIdNameMarks(StudentDoc studentDoc) {
 		return new IdNameMarks() {
 			
 			@Override
 			public String getName() {
-				
 				return studentDoc.getName();
 			}
 			
 			@Override
 			public long getId() {
-				
 				return studentDoc.getId();
 			}
 			
 			@Override
 			public List<Mark> getMarks() {
-				
 				return studentDoc.getMarks();
 			}
 		};
 	}
-
+	
+	
+	IdNameMarks toIdNameMarksFromDocument(Document document) {
+		Document idDocument = document.get("_id", Document.class);
+		return new IdNameMarks() {
+			
+			@Override
+			public String getName() {
+				return idDocument.getString("name");
+			}
+			
+			@Override
+			public long getId() {
+				return idDocument.getLong("id");
+			}
+			
+			@SuppressWarnings("unchecked")
+			@Override
+			public List<Mark> getMarks() {
+				return ((List<Document>)document.get("marks")).stream()
+						.map(d -> new Mark(d.getString("subject"), d.getDate("date").toInstant().
+								atZone(ZoneId.systemDefault()).toLocalDate(), d.getInteger("score"))).toList();
+			}
+		};
+	}
+	
+	private List<IdNameMarks> getBestWorstStudents(int nStudents, boolean isBest, boolean isNull) {
+		UnwindOperation unwindOperation = unwind("marks", isNull? true : false);
+		GroupOperation groupOperation = group("id", "name")
+				.addToSet("marks").as("marks").sum("marks.score").as("totalScore");
+		SortOperation sortOperation = sort(isBest? Direction.DESC : Direction.ASC, "totalScore");
+		LimitOperation limitOper = limit(nStudents);
+		Aggregation pipeLine = newAggregation(List.of(unwindOperation, groupOperation, sortOperation, limitOper));
+		var aggregationResult = mongoTemplate.aggregate(pipeLine, StudentDoc.class,Document.class);
+		List<Document> resultDocuments = aggregationResult.getMappedResults();
+		return resultDocuments.stream().map(this::toIdNameMarksFromDocument).toList();
+	}
+	
 	@Override
 	public List<IdNameMarks> getBestStudents(int nStudents) {
-		// TODO Auto-generated method stub
-		return null;
+		return getBestWorstStudents(nStudents, true, false);		
 	}
 
 	@Override
 	public List<IdNameMarks> getWorstStudents(int nStudents) {
-		// TODO Auto-generated method stub
-		return null;
+		return getBestWorstStudents(nStudents, false, true);
 	}
 
 	@Override
 	public List<IdNameMarks> getBestStudentsSubject(int nStudents, String subject) {
-		// TODO Auto-generated method stub
-		return null;
+		UnwindOperation unwindOperation = unwind("marks");
+		MatchOperation matchOperation = match(Criteria.where("marks.subject").is(subject));
+		GroupOperation groupOperation = group("id", "name")
+				.addToSet("marks").as("marks").sum("marks.score").as("totalScore");
+		SortOperation sortOperation = sort(Direction.DESC, "totalScore");
+		LimitOperation limitOper = limit(nStudents);
+		Aggregation pipeLine = newAggregation(List.of(unwindOperation, matchOperation, groupOperation, 
+				sortOperation, limitOper));
+		var aggregationResult = mongoTemplate.aggregate(pipeLine, StudentDoc.class,Document.class);
+		List<Document> resultDocuments = aggregationResult.getMappedResults();
+		return resultDocuments.stream().map(this::toIdNameMarksFromDocument).toList();
 	}
 
 	@Override

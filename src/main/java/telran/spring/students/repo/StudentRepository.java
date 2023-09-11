@@ -19,4 +19,13 @@ List<StudentDoc> findStudentsPhonePrefix(String phonePrefix);
 List<IdName> findStudentsAllMarksGreater(int score);
 @Query(value="{$expr:{$lt:[{$size:$marks},?0]}}", fields="{}",delete = true)
 List<StudentDoc> removeStudentsFewMarks(int nMarks);
+
+
+@Query(value = "{$and:[{marks:{$elemMatch:{mark:{$gt:?0}, subject:{$eq:?1}}}},{marks:{$not:{$elemMatch:{mark:{$lte:?0}, subject:{$eq:?1}}}}}]}")
+List<IdName> findAllStudentsBySubjectAndScoreGreaterThan(int score, String subject);
+
+@Query(value = "{marks:{$not:{$elemMatch:{mark:{$gt:?0}}}}}", fields = "{}", delete = true)
+List<StudentDoc> removeStudentsNoMarksOrAllMarksValuesLessThan(int score);
+
+
 }

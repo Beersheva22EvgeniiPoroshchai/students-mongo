@@ -2,24 +2,18 @@ package telran.spring.students;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import static telran.spring.students.TestDbCreation.*;
 
-import telran.spring.students.docs.StudentDoc;
-import telran.spring.students.dto.IdName;
-import telran.spring.students.dto.IdNameMarks;
-import telran.spring.students.dto.Mark;
-import telran.spring.students.dto.Student;
-import telran.spring.students.dto.SubjectMark;
+
+import telran.spring.students.dto.*;
 import telran.spring.students.repo.StudentRepository;
 import telran.spring.students.service.StudentsService;
 
@@ -112,5 +106,52 @@ class StudentsServiceTests {
 		Student expected1 = expectedRes.get(0);
 		assertEquals(expected1.id(), actual1.getId());
 	}
+	
+	
+	@Test
+	void getBestStudTest() {
+		List<IdNameMarks> bestStud = studentsService.getBestStudents(2);
+		assertEquals(2, bestStud.size());
+		IdNameMarks expStud1 = bestStud.get(0);
+		IdNameMarks expStud2 = bestStud.get(1);
+		assertEquals(ID3, expStud1.getId());
+		assertEquals(ID1, expStud2.getId());
+		int markStud1 = expStud1.getMarks().stream().mapToInt(Mark::score).sum();
+		assertEquals(345, markStud1);
+	}
+	
+	
+	@Test
+	void getWorstStudTest() {
+		List<IdNameMarks> worstStud = studentsService.getWorstStudents(3);
+		assertEquals(3, worstStud.size());
+		IdNameMarks expStud1 = worstStud.get(0);
+		IdNameMarks expStud2 = worstStud.get(1);
+		IdNameMarks expStud3 = worstStud.get(2);
+		assertEquals(ID6, expStud1.getId());
+		assertEquals(ID4, expStud2.getId());
+		assertEquals(ID2, expStud3.getId());
+	}
+	
+	@Test
+	void getBestStudBySubjTest() {
+		List<IdNameMarks> bestStudBySubj2 = studentsService.getBestStudentsSubject(2, SUBJECT2);
+		assertEquals(2, bestStudBySubj2.size());
+		IdNameMarks expStud1 = bestStudBySubj2.get(0);
+		IdNameMarks expStud2 = bestStudBySubj2.get(1);
+		assertEquals(ID2, expStud1.getId());
+		assertEquals(ID3, expStud2.getId());
+		assertEquals(75, expStud2.getMarks().stream().mapToInt(Mark::score).sum());
+		List<IdNameMarks> bestStudBySubj3 = studentsService.getBestStudentsSubject(2, SUBJECT3);
+		assertEquals(2, bestStudBySubj3.size());
+		assertEquals(ID5, bestStudBySubj3.get(0).getId());
+		assertEquals(ID3, bestStudBySubj3.get(1).getId());
+		//assertEquals(ID3, bestStudBySubj3.get(2).getId());
+		
+	}
+	
+	
+	
+	
 
 }

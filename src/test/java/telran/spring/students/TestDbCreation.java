@@ -84,16 +84,19 @@ public class TestDbCreation {
 		List<StudentDoc> studentDocsList= IntStream.range(0, students.length).mapToObj(this::indexToStudent).toList();
 		studentRepo.saveAll(studentDocsList);
 	}
+	
 	StudentDoc indexToStudent(int index) {
 		Student student = students[index];
 		StudentDoc res = new StudentDoc(student.id(), student.name(), student.phone(), null);
 		res.setMarks(new ArrayList<>(List.of(marks[index])));
 		return res;
 	}
+	
 	double getAvgMark() {
 		
 		return Arrays.stream(marks).flatMap(Arrays::stream).collect(Collectors.averagingInt(Mark::score));
 	}
+	
 	double getAvgMarkStudent(long id) {
 		return Arrays.stream(marks[(int)id - 123]).collect(Collectors.averagingInt(Mark::score));
 	}
