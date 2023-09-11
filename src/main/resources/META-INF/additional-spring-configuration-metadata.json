@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "app.random.creation.enable",
+    "type": "java.lang.String",
+    "description": "Enabling of DB creation'"
+  },
+  {
+    "name": "app.students.mark.good",
+    "type": "java.lang.String",
+    "description": "Threshold for the good mark"
+  }
+]}
